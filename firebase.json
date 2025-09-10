@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "site": "renegade-kitchen-67a98",
+    "public": "client/dist",
+    "predeploy": [
+      "npm --prefix client ci --silent --no-progress || npm --prefix client install",
+      "npm --prefix client run build"
+    ],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
+
+
