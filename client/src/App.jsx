@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 import Slideshow from './Slideshow.jsx'
+import { useEffect } from 'react'
+import { getSiteContent } from './services/content'
 import OrderModal from './OrderModal.jsx'
+import Reviews from './Reviews.jsx'
 
 // Auto-import all images from the assets directory (sorted by filename)
 const galleryImages = Object.entries(
@@ -16,7 +19,7 @@ const chefImage = Object.entries(
 ).find(([p]) => /\/chef\.(png|jpe?g|webp|avif)$/i.test(p))?.[1]
 
 
-const Nav = ({ onOrder }) => {
+const Nav = ({ onOrder, logoUrl }) => {
   const [open, setOpen] = useState(false);
   const links = [
     ['Broth', '#broth'],
@@ -32,7 +35,7 @@ const Nav = ({ onOrder }) => {
     <header className="sticky top-0 z-50 bg-cream/90 backdrop-blur border-b border-ink/10">
       <div className="container-p flex items-center justify-between py-4">
         <a href="#" className="flex items-center gap-3">
-          <img src="/logo.jpg" alt="Renegade Kitchen Bonefied Broth logo" className="h-12 w-12 rounded-full object-cover shadow" />
+          <img src={logoUrl || '/logo.jpg'} alt="Renegade Kitchen Bonefied Broth logo" className="h-12 w-12 rounded-full object-cover shadow" />
           <div className="leading-tight">
             <div className="text-xs uppercase tracking-[0.2em] text-ink/70">By</div>
             <div className="text-lg font-display font-bold">Renegade Kitchen</div>
@@ -66,12 +69,12 @@ const Nav = ({ onOrder }) => {
   )
 }
 
-const Hero = () => (
+const Hero = ({ heroTitle, heroSubtitle, logoUrl }) => (
   <section className="relative">
     <div className="container-p grid md:grid-cols-2 items-center gap-10 py-16 md:py-24">
       <div>
-        <h1 className="font-display text-4xl md:text-6xl leading-tight">BONEFIED BROTH</h1>
-        <p className="mt-4 text-lg text-ink/80">Prescribed by a nurse, crafted by a chef.</p>
+        <h1 className="font-display text-4xl md:text-6xl leading-tight">{heroTitle || 'BONEFIED BROTH'}</h1>
+        <p className="mt-4 text-lg text-ink/80">{heroSubtitle || 'Prescribed by a nurse, crafted by a chef.'}</p>
         <div className="mt-8 flex gap-4">
           <a href="#order" className="btn btn-primary">Order Now</a>
           <a href="#benefits" className="btn btn-outline">Why Broth?</a>
@@ -80,7 +83,7 @@ const Hero = () => (
       </div>
       <div className="flex justify-center">
         <div className="relative">
-          <img src="/logo.jpg" alt="Bonefied Broth logo" className="w-72 h-72 md:w-96 md:h-96 object-cover rounded-full ring-8 ring-cream shadow-soft"/>
+          <img src={logoUrl || '/logo.jpg'} alt="Bonefied Broth logo" className="w-72 h-72 md:w-96 md:h-96 object-cover rounded-full ring-8 ring-cream shadow-soft"/>
           <div className="absolute -bottom-4 -right-4 bg-honey text-ink px-4 py-2 rounded-xl font-semibold shadow-soft">
             Real • Kosher
           </div>
@@ -98,20 +101,20 @@ const SectionTitle = ({eyebrow, title, subtitle}) => (
   </div>
 )
 
-const Benefits = () => {
-  const items = [
+const Benefits = ({ items }) => {
+  const defaultItems = [
     ['Supports Your Joint Health', 'Collagen, gelatin, and amino acids like proline and glycine may support cartilage and reduce joint pain or stiffness.'],
     ['Supports Your Gut Health', 'Gelatin can support the intestinal lining, aiding digestion and calming inflammation. Often included in protocols for leaky gut or IBS.'],
     ['It’s Rich in Nutrients', 'A source of vitamins, minerals, and electrolytes like calcium, magnesium, and phosphorus that support immune and bone health.'],
     ['KOSHER', 'KOSHER Prepared to the highest kashrut standard. All Meat is Glatt. Contact for further kashrus information.']
-
   ]
+  const list = (items && items.length) ? items.map(i=>[i.title,i.body]) : defaultItems
   return (
     <section id="benefits" className="py-16 md:py-24 bg-white/60">
       <div className="container-p">
         <SectionTitle eyebrow="Benefits" title="Why BONEFIED BROTH?" />
         <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.map(([title, body]) => (
+          {list.map(([title, body]) => (
             <div key={title} className="bg-white rounded-2xl p-6 shadow-soft border border-ink/5">
               <div className="text-[14px] md:text-[16px] xl:text-[18px] font-semibold leading-tight whitespace-normal break-words">{title}</div>
               <p className="text-ink/70 mt-2">{body}</p>
@@ -123,7 +126,7 @@ const Benefits = () => {
   )
 }
 
-const Broth = ({ onOrder }) => {
+const Broth = ({ onOrder, nutritionalHighlights }) => {
   return (
   <section id="broth" className="py-16 md:py-24">
     <div className="container-p grid lg:grid-cols-[1.2fr,0.8fr] gap-12 items-start">
@@ -142,12 +145,12 @@ const Broth = ({ onOrder }) => {
       <div className="bg-white rounded-3xl p-8 shadow-soft border border-ink/5">
         <div className="uppercase tracking-widest text-xs text-ink/60">Nutritional Highlights*</div>
         <dl className="grid grid-cols-2 gap-4 mt-4">
-          {[
+          {(nutritionalHighlights && nutritionalHighlights.length ? nutritionalHighlights.map(n=>[n.label,n.value]) : [
             ['Protein', '15g'],
             ['Calories', '45'],
             ['Collagen', 'High'],
             ['Allergens', 'None']
-          ].map(([k, v]) => (
+          ]).map(([k, v]) => (
             <div key={k} className="bg-cream rounded-xl p-4 border border-ink/5">
               <dt className="text-sm text-ink/60">{k}</dt>
               <dd className="text-2xl font-semibold">{v}</dd>
@@ -169,12 +172,12 @@ const Broth = ({ onOrder }) => {
   )
 }
 
-const Ingredients = () => (
+const Ingredients = ({ ingredients }) => (
   <section id="ingredients" className="py-16 md:py-24 bg-white/60">
     <div className="container-p grid md:grid-cols-2 gap-10 items-center">
       <div>
         <SectionTitle eyebrow="Ingredients" title="Simply nourishing" />
-        <p className="mt-4 text-ink/80">Beef bones, leek, celery, onion, carrot, thyme, parsley, bay leaves, salt, and black pepper.</p>
+        <p className="mt-4 text-ink/80">{(ingredients && ingredients.length ? ingredients.join(', ') : 'Beef bones, leek, celery, onion, carrot, thyme, parsley, bay leaves, salt, and black pepper.')}</p>
         <p className="mt-4 text-ink/70 text-sm">Thoughtfully sourced and balanced for depth and clarity.</p>
       </div>
       <div className="bg-cream border border-ink/5 p-8 rounded-3xl shadow-soft">
@@ -190,61 +193,58 @@ const Ingredients = () => (
   </section>
 )
 
-const Gallery = () => (
+const Gallery = ({ images }) => (
   <section id="gallery" className="py-16 md:py-24">
     <div className="container-p">
       <SectionTitle eyebrow="Gallery" title="See the product up close" subtitle="A few looks at Bonefied Broth." />
       <div className="mt-8">
-        <Slideshow images={galleryImages} />
+        <Slideshow images={images && images.length ? images : galleryImages} />
       </div>
     </div>
   </section>
 )
 
-const WaysToUse = () => (
+const WaysToUse = ({ items }) => (
   <section id="ways" className="py-16 md:py-24 bg-white/60">
     <div className="container-p">
       <SectionTitle eyebrow="Ways to Use" title="Delicious, simple, and versatile" />
       <div className="mt-10 grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink/5">
-          <div className="text-xl font-semibold">A Filling Meal or Drink</div>
-          <p className="text-ink/70 mt-2">With 15g of protein, sip it like tea or coffee — soothing, hydrating, and nutrient‑dense. Great first thing in the morning or as a light evening snack.</p>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink/5">
-          <div className="text-xl font-semibold">Base for Soups or Stews</div>
-          <p className="text-ink/70 mt-2">Use instead of water or stock to boost flavor and nutrition in soups, stews, sauces, and marinades.</p>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-soft border border-ink/5">
-          <div className="text-xl font-semibold">Cook Grains or Vegetables</div>
-          <p className="text-ink/70 mt-2">Cook rice, quinoa, lentils, or steam vegetables in bone broth to add depth of flavor and extra nutrients.</p>
-        </div>
+        {(items && items.length ? items : [
+          { title: 'A Filling Meal or Drink', body: 'With 15g of protein, sip it like tea or coffee — soothing, hydrating, and nutrient‑dense. Great first thing in the morning or as a light evening snack.' },
+          { title: 'Base for Soups or Stews', body: 'Use instead of water or stock to boost flavor and nutrition in soups, stews, sauces, and marinades.' },
+          { title: 'Cook Grains or Vegetables', body: 'Cook rice, quinoa, lentils, or steam vegetables in bone broth to add depth of flavor and extra nutrients.' },
+        ]).map((it)=> (
+          <div key={it.title} className="bg-white rounded-2xl p-6 shadow-soft border border-ink/5">
+            <div className="text-xl font-semibold">{it.title}</div>
+            <p className="text-ink/70 mt-2">{it.body}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
 )
 
-const Story = () => {
+const Story = ({ storyTitle, storyBody, storyImageUrl }) => {
   const storyImage = chefImage || (galleryImages || []).find((p) => /4D12B177-A65F-45FC-9D46-728F205565B2|portrait/i.test(p)) || (galleryImages || [])[0] || '/logo.jpg';
   return (
     <section id="story" className="py-16 md:py-24">
       <div className="container-p grid md:grid-cols-2 gap-10 items-center">
         <div>
-          <SectionTitle eyebrow="About Us" title="Meet Chef Mo" />
+          <SectionTitle eyebrow="About Us" title={storyTitle || 'Meet Chef Mo'} />
           <div className="mt-6 text-ink/80 space-y-4">
-            <p>Meet Chef Mo, our Executive Chef and CEO! With a passion for elevating kosher cuisine, Mo founded Renegade Kitchen in 2019.</p>
-            <p>After culinary school, he specialized in smoked meats and has been refining his craft ever since. Now, in 2025, we're excited to introduce BONEFIED BROTH — a premium, health‑conscious product designed with you in mind.</p>
+            <p>{storyBody || 'Meet Chef Mo, our Executive Chef and CEO! With a passion for elevating kosher cuisine, Mo founded Renegade Kitchen in 2019. After culinary school, he specialized in smoked meats and has been refining his craft ever since. Now, in 2025, we\'re excited to introduce BONEFIED BROTH — a premium, health‑conscious product designed with you in mind.'}</p>
           </div>
         </div>
         <div className="rounded-3xl overflow-hidden border border-ink/10 shadow-soft bg-cream flex items-center justify-center">
-          <img src={storyImage} alt="Chef Mo" className="max-h-[24rem] h-full w-full object-contain"/>
+          <img src={storyImageUrl || storyImage} alt="Chef Mo" className="max-h-[24rem] h-full w-full object-contain"/>
         </div>
       </div>
     </section>
   )
 }
 
-const FAQ = () => {
-  const faqs = [
+const FAQ = ({ items }) => {
+  const faqs = items && items.length ? items.map(i=>[i.q,i.a]) : [
     ['Is it kosher?', 'Yes. Bonefied Broth is prepared to kosher standards.'],
     ['How do I use it?', 'Sip it warm, or use as a base for soups, grains, and sauces.'],
     ['How is it delivered?', 'We refrigerate or freeze in glass mason jars to lock in freshness. Local pickup/ship varies by region.'],
@@ -362,21 +362,24 @@ const Footer = () => (
 
 export default function App() {
   const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [cms, setCms] = useState(null)
+  useEffect(() => { getSiteContent().then((c)=> c && setCms(c)).catch(()=>{}) }, [])
   const openOrder = () => setIsOrderOpen(true);
   const closeOrder = () => setIsOrderOpen(false);
   const jotformUrl = 'https://www.jotform.com/build/252296401837157/settings/emails#preview';
 
   return (
     <div>
-      <Nav onOrder={openOrder} />
-      <Hero />
-      <Benefits />
-      <Broth onOrder={openOrder} />
-      <Ingredients />
-      <WaysToUse />
-      <Gallery />
-      <Story />
-      <FAQ />
+      <Nav onOrder={openOrder} logoUrl={cms?.logoUrl} />
+      <Hero heroTitle={cms?.heroTitle} heroSubtitle={cms?.heroSubtitle} logoUrl={cms?.logoUrl} />
+      <Benefits items={cms?.benefits} />
+      <Broth onOrder={openOrder} nutritionalHighlights={cms?.nutritionalHighlights} />
+      <Ingredients ingredients={cms?.ingredientsList} />
+      <WaysToUse items={cms?.ways} />
+      <Gallery images={(cms?.gallery||[]).map((g)=> typeof g==='string' ? g : g.url).filter(Boolean)} />
+      <Story storyTitle={cms?.storyTitle} storyBody={cms?.storyBody} storyImageUrl={cms?.storyImageUrl} />
+      <Reviews items={cms?.reviews||[]} />
+      <FAQ items={cms?.faq} />
       <Contact />
       <Footer />
       <OrderModal open={isOrderOpen} onClose={closeOrder} src={jotformUrl} />
