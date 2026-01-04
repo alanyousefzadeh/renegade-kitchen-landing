@@ -69,14 +69,14 @@ const Nav = ({ onOrder, logoUrl }) => {
   )
 }
 
-const Hero = ({ heroTitle, heroSubtitle, logoUrl }) => (
+const Hero = ({ heroTitle, heroSubtitle, logoUrl, onOrder }) => (
   <section className="relative">
     <div className="container-p grid md:grid-cols-2 items-center gap-10 py-16 md:py-24">
       <div>
         <h1 className="font-display text-4xl md:text-6xl leading-tight">{heroTitle || 'BONEFIED BROTH'}</h1>
         <p className="mt-4 text-lg text-ink/80">{heroSubtitle || 'Prescribed by a nurse, crafted by a chef.'}</p>
         <div className="mt-8 flex gap-4">
-          <a href="#order" className="btn btn-primary">Order Now</a>
+          <button onClick={onOrder} className="btn btn-primary">Order Now</button>
           <a href="#benefits" className="btn btn-outline">Why Broth?</a>
         </div>
         <div className="mt-6 text-ink/70 text-sm">Est. 2019 • Kosher • Crafted with integrity</div>
@@ -371,7 +371,7 @@ export default function App() {
   return (
     <div>
       <Nav onOrder={openOrder} logoUrl={cms?.logoUrl} />
-      <Hero heroTitle={cms?.heroTitle} heroSubtitle={cms?.heroSubtitle} logoUrl={cms?.logoUrl} />
+      <Hero heroTitle={cms?.heroTitle} heroSubtitle={cms?.heroSubtitle} logoUrl={cms?.logoUrl} onOrder={openOrder} />
       <Benefits items={cms?.benefits} />
       <Broth onOrder={openOrder} nutritionalHighlights={cms?.nutritionalHighlights} />
       <Ingredients ingredients={cms?.ingredientsList} />
